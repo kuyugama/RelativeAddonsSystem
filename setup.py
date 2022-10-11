@@ -1,8 +1,10 @@
 from setuptools import setup, find_packages
 
+import RelativeAddonsSystem
+
 setup(
     name='Relative Addons System',
-    version='2.3.2',
+    version=RelativeAddonsSystem.__version__,
     packages=find_packages(),
     url='',
     license='MIT',
