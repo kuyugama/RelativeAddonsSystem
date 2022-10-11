@@ -6,7 +6,6 @@ build-backend = "setuptools.build_meta"
 name = "relative-addons-system"
 version = "2.4.0"
 description = "Easier way to manage your project addons"
-readme = "README.md"
 authors = [{ name = "kuyugama(youngtitanium)", email = "kuyugamas@gmail.com" }]
 license = { file = "LICENSE" }
 classifiers = [
