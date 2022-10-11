@@ -1,5 +1,5 @@
 import pathlib
-from typing import re
+import re
 
 from setuptools import setup, find_packages
 
