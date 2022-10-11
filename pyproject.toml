@@ -1,3 +1,26 @@
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "relative-addons-system"
+version = "2.4.0"
+description = "Easier way to manage your project addons"
+readme = "README.md"
+authors = [{ name = "kuyugama(youngtitanium)", email = "kuyugamas@gmail.com" }]
+license = { file = "LICENSE" }
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Topic :: Utilities"
+]
+keywords = ["addons", "system", "relative", "requirement", "dependency", "addon"]
+dependencies = []
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+dev = ["black"]
+
+[project.urls]
+Homepage = "https://github.com/youngtitanium/RelativeAddonsSystem"
