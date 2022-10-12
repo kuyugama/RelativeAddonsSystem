@@ -66,7 +66,7 @@ class Addon:
     @property
     def module(self):
         if not self._module:
-            self._module = importlib.import_module(str(self.path).replace("\\", ".").replace("/", "."))
+            self._module = importlib.import_module(str(self.path.relative_to(self.path.parent.parent)).replace("\\", ".").replace("/", "."))
 
         return self._module
 
