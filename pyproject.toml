@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "relative-addons-system"
-version = "2.4.0"
+version = "2.4.1"
 description = "Easier way to manage your project addons"
 authors = [{ name = "kuyugama(youngtitanium)", email = "kuyugamas@gmail.com" }]
 license = { file = "LICENSE" }
@@ -17,6 +17,7 @@ classifiers = [
 keywords = ["addons", "system", "relative", "requirement", "dependency", "addon"]
 dependencies = []
 requires-python = ">=3.10"
+readme = "README.md"
 
 [project.optional-dependencies]
 dev = ["black"]
