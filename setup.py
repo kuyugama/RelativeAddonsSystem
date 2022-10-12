@@ -26,5 +26,6 @@ setup(
     license='MIT',
     author='YoungTitanium',
     author_email='youngtitanium.l@gmail.com',
-    description='The simple python addon system, which allow you to load, reload, enable, disable, requirements check and install of addons'
+    description="Easier way to manage your project addons",
+    long_description='The simple python addon system, which allow you to load, reload, enable, disable, requirements check and install of addons',
 )
