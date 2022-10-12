@@ -28,7 +28,7 @@ def get_installed_libraries(force: bool = False) -> dict:
     return installed_libraries.get()
 
 
-def install_libraries(libraries: list[dict[str, str]]):
+def install_libraries(libraries: list[dict[str, str]]) -> list[str]:
     names = []
     for requirement in libraries:
         if requirement["name"].lower() not in installed_libraries.get():

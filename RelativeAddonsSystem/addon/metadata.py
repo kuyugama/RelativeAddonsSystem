@@ -24,14 +24,23 @@ class AddonMeta:
 
         return self[name]
 
+    def set(self, name: str, value: object):
+        json.dumps(value)
+
+        if name not in self:
+            self._keys.append(name)
+
+        setattr(self, name, value)
+
     def __getitem__(self, item):
-        if item not in self._keys:
+        if item not in self:
             raise KeyError(item)
 
         return getattr(self, item, None)
 
     def __setitem__(self, key, value):
-        if key not in self._keys:
+        json.dumps(value)
+        if key not in self:
             self._keys.append(key)
         setattr(self, key, value)
 

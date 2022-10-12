@@ -146,7 +146,7 @@ class Addon:
 
         return True
 
-    def install_requirements(self):
+    def install_requirements(self) -> list[str]:
         """
         **Automatic installation of addon requirements if required**
 
