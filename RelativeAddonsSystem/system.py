@@ -1,11 +1,10 @@
 import shutil
 from pathlib import Path
 import os
-import subprocess
 import json
 import warnings
 
-from . import utils, libraries
+from . import libraries
 from .addon import Addon
 
 
@@ -20,7 +19,7 @@ class RelativeAddonsSystem:
             addons_directory = Path(addons_directory)
 
         if not addons_directory.exists():
-            addons_directory.mkdir()
+            addons_directory.mkdir(parents=True)
 
         if addons_directory.is_file():
             raise ValueError("Addons directory cannot be a file")
