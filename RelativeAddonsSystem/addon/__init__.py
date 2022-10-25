@@ -21,20 +21,29 @@ class Addon:
             meta_path = path / "addon.json"
 
         if not isinstance(meta_path, Path):
-            raise MetadataError("Cannot recognize metadata of addon at {path}".format(path=path.absolute()))
+            raise MetadataError(
+                "Cannot recognize metadata of addon at {path}".format(
+                    path=path.absolute()
+                )
+            )
 
         self._meta = AddonMeta(meta_path)
         self.path = path
         self._module = module
         self._config = None
 
+        self._module_path = self.path.relative_to(Path().absolute())
         self._config_path = self.path / (self.meta.name + ".config")
 
     @property
     def meta(self):
         if not self._meta:
             if not self.path / "addon.json":
-                raise MetadataError("Cannot find metadata file of addon at {path}".format(path=self.path.absolute()))
+                raise MetadataError(
+                    "Cannot find metadata file of addon at {path}".format(
+                        path=self.path.absolute()
+                    )
+                )
 
             with open(self.path / "addon.json") as info:
                 self._meta = AddonMeta(**json.load(info))
@@ -66,7 +75,11 @@ class Addon:
     @property
     def module(self):
         if not self._module:
-            self._module = importlib.import_module(str(self.path.relative_to(self.path.parent.parent)).replace("\\", ".").replace("/", "."))
+            self._module = importlib.import_module(
+                str(self._module_path)
+                .replace("\\", ".")
+                .replace("/", ".")
+            )
 
         return self._module
 
@@ -84,11 +97,11 @@ class Addon:
         if not self._module:
             self.get_module()
 
-        for name, module in vars(self._module).items():
-            if isinstance(module, types.ModuleType):
-                setattr(self._module, name, importlib.reload(module))
+        # for name, module in vars(self._module).items():
+        #     if isinstance(module, types.ModuleType):
+        #         setattr(self._module, name, importlib.reload(module))
 
-        self._module = importlib.reload(self._module)
+        self.set_module(utils.recursive_reload_module(self._module))
 
         return self.module
 
@@ -124,12 +137,14 @@ class Addon:
                         "addon [{}] requires not installed library [{}] with version {}".format(
                             self.meta["name"],
                             requirement["name"],
-                            requirement["version"]
+                            requirement["version"],
                         )
                     )
                 return False
 
-            if utils.check_version(requirement["version"], installed_libraries[requirement["name"].lower()]):
+            if utils.check_version(
+                requirement["version"], installed_libraries[requirement["name"].lower()]
+            ):
                 continue
             else:
                 if alert:
@@ -139,7 +154,7 @@ class Addon:
                             self.meta["name"],
                             requirement["name"],
                             requirement["version"],
-                            installed_libraries[requirement["name"].lower()]
+                            installed_libraries[requirement["name"].lower()],
                         )
                     )
                 return False
