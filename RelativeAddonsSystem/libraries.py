@@ -1,7 +1,12 @@
+import sys
+from pathlib import Path
 import subprocess
 from contextvars import ContextVar
 
 from RelativeAddonsSystem import utils
+
+
+pip_executable = Path(sys.executable).parent / "pip"
 
 installed_libraries = ContextVar("installed_libraries", default={})
 
@@ -15,7 +20,7 @@ def get_installed_libraries(force: bool = False) -> dict:
     """
 
     if force or len(installed_libraries.get()) == 0:
-        pip_out = subprocess.getoutput("pip freeze")
+        pip_out = subprocess.getoutput(str(pip_executable.absolute()) + " freeze")
 
         libs = {}
 
@@ -46,7 +51,7 @@ def install_libraries(libraries: list[dict[str, str]]) -> list[str]:
 
     if len(names):
         out = subprocess.getoutput(
-            "pip install " + " ".join(names)
+            str(pip_executable.absolute()) + " install " + " ".join(names)
         )
         if "ERROR" in out:
             raise RuntimeError("Error occurred while installing: {}".format(out))
