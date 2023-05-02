@@ -1,16 +1,22 @@
-## Relative Addons System
-**This is special system which allow you to manage your addons**
+# Relative Addons System
+**This is a special system that allows you to manage your addons in runtime.**
 
-**Addon** is a folder with ``addon.json`` and ``__init__.py`` files
+**The library has caching that allows it to work faster**
 
-**_Example:_**
+## Definitions
+**Addon** - directory that contains `addon.json` and `__init__.py`  
+**addon.json** is a `json` file that describes addon and must contain `name`, `author`, 
+`description` and `version`(strings)
+
+
+## Usage examples
 ```python
 from pathlib import Path
 
 from RelativeAddonsSystem import RelativeAddonsSystem, Addon, AddonMeta
 
 # Init addons system
-system = RelativeAddonsSystem(Path(__file__).parent / "addons")
+system = RelativeAddonsSystem(Path(__file__).parent / "addons", auto_install_requirements=True)
 
 # return list of Addon objects
 addons: list[Addon] = system.get_all_addons()
@@ -38,9 +44,9 @@ else:
         ...
 ```
 
-**In this example, we have listed all addons and install their dependencies if they are not installed**
+**In this example, we have listed all addons and installed their dependencies if they were not already installed.**
 
-**You can also disable or enable addons:**
+**We can also disable or enable addons:**
 
 ```python
 from pathlib import Path
@@ -48,7 +54,7 @@ from pathlib import Path
 from RelativeAddonsSystem import RelativeAddonsSystem, Addon
 
 # Init addons system
-system = RelativeAddonsSystem(Path(__file__).parent / "addons")
+system = RelativeAddonsSystem(Path(__file__).parent / "addons", auto_install_requirements=True)
 
 addons: list[Addon] = system.get_enabled_addons() # get all enabled addons
 
@@ -61,14 +67,14 @@ if len(addons) > 0:
     addon.enable() # enable addon
 ```
 
-**_Or import, reimport(Useful when you updated your addon) module:_**
+**_Or import and re-import the module (useful when we have updated your addon):_**
 ```python
 from pathlib import Path
 
 from RelativeAddonsSystem import RelativeAddonsSystem, Addon
 
 # Init addons system
-system = RelativeAddonsSystem(Path(__file__).parent / "addons")
+system = RelativeAddonsSystem(Path(__file__).parent / "addons", auto_install_requirements=True)
 
 addons: list[Addon] = system.get_enabled_addons() # get all enabled addons
 
@@ -85,14 +91,14 @@ if len(addons) > 0:
     ... # Work with module
 ```
 
-**_You can also change the meta in your code:_**
+**_We can also change the metadata in your code:_**
 ```python
 from pathlib import Path
 
 from RelativeAddonsSystem import RelativeAddonsSystem, Addon, AddonMeta
 
 # Init addons system
-system = RelativeAddonsSystem(Path(__file__).parent / "addons")
+system = RelativeAddonsSystem(Path(__file__).parent / "addons", auto_install_requirements=True)
 
 addons: list[Addon] = system.get_enabled_addons() # get all enabled addons
 
@@ -104,4 +110,27 @@ if len(addons) > 0:
     meta.set("version", "1.2")
 
     meta.save()
+```
+
+**_Or set specific data into the addon's storage:_**
+```python
+from pathlib import Path
+
+from RelativeAddonsSystem import RelativeAddonsSystem, Addon
+from RelativeAddonsSystem.utils import Storage
+
+# Init addons system
+system = RelativeAddonsSystem(Path(__file__).parent / "addons", auto_install_requirements=True)
+
+addons: list[Addon] = system.get_enabled_addons() # get all enabled addons
+
+if len(addons) > 0:
+    addon: Addon = addons[0] # first addon from list
+    
+    # Loaded the ADDON_DIR/ADDON_NAME-storage.json file
+    storage: Storage = addon.get_storage()
+
+    storage.set("api_version", "1.2")
+
+    storage.save()
 ```

@@ -3,7 +3,7 @@ from pathlib import Path
 import subprocess
 from contextvars import ContextVar
 
-from RelativeAddonsSystem import utils
+from . import utils
 
 
 pip_executable = Path(sys.executable).parent / "pip"
@@ -39,13 +39,13 @@ def install_libraries(libraries: list[dict[str, str]]) -> list[str]:
         if requirement["name"].lower() not in installed_libraries.get():
             name = requirement["name"].lower()
             if "version" in requirement and not requirement["version"] == "*":
-                name += "==" + utils.version_tranform.to_library_version(requirement["version"])
+                name += "==" + utils.version_transform.to_library_version(requirement["version"])
             names.append(name)
 
         elif not utils.check_version(requirement["version"], installed_libraries.get()[requirement["name"].lower()]):
             name = requirement["name"].lower()
             if "version" in requirement and not requirement["version"] == "*":
-                name += "==" + utils.version_tranform.to_library_version(requirement["version"])
+                name += "==" + utils.version_transform.to_library_version(requirement["version"])
 
             names.append(name)
 

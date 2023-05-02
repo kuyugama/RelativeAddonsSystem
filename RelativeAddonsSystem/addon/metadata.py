@@ -1,15 +1,15 @@
 import json
 from pathlib import Path
+from typing import Any
 
 
 class AddonMeta:
-
     name: str
     version: str
     description: str
     author: str
-    status: str
-    requirements: list[dict[str, str]]
+    status: str | None
+    requirements: list[dict[str, str]] | None
 
     def __init__(self, path: Path):
         self._path = path
@@ -18,7 +18,7 @@ class AddonMeta:
 
         self.load()
 
-    def get(self, name: str, default: object):
+    def get(self, name: str, default: Any = None) -> int | str | dict | list | float | bool:
         if name not in self:
             return default
 

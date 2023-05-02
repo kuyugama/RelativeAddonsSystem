@@ -1,13 +1,13 @@
 import importlib
 import json
 import shutil
-import types
 import warnings
 from pathlib import Path
 
 from .metadata import AddonMeta
-from .configuration import AddonConfig
-from .. import libraries, utils
+from RelativeAddonsSystem import libraries, utils
+
+from RelativeAddonsSystem.utils import RelativeAddonsSystemCache
 
 
 class MetadataError(BaseException):
@@ -30,10 +30,10 @@ class Addon:
         self._meta = AddonMeta(meta_path)
         self.path = path
         self._module = module
-        self._config = None
+        self._storage = None
 
-        self._module_path = self.path.relative_to(Path().absolute())
-        self._config_path = self.path / (self.meta.name + ".config")
+        self._module_path = self.path.relative_to(Path())
+        self._config_path = self.path / (self.meta.name + "-storage.json")
 
     @property
     def meta(self):
@@ -97,10 +97,6 @@ class Addon:
         if not self._module:
             self.get_module()
 
-        # for name, module in vars(self._module).items():
-        #     if isinstance(module, types.ModuleType):
-        #         setattr(self._module, name, importlib.reload(module))
-
         self.set_module(utils.recursive_reload_module(self._module))
 
         return self.module
@@ -113,12 +109,12 @@ class Addon:
         """
         return shutil.make_archive(self.meta["name"], "zip", root_dir=self.path)
 
-    def get_config(self):
+    def get_storage(self):
 
-        if not self._config:
-            self._config = AddonConfig(self._config_path)
+        if not self._storage:
+            self._storage = utils.Storage(self._config_path)
 
-        return self._config
+        return self._storage
 
     def check_requirements(self, alert: bool = True):
         """
@@ -128,9 +124,14 @@ class Addon:
         :return: bool. True if addon requirements is satisfied
         """
 
+        cache = RelativeAddonsSystemCache.get_instance()
+
+        if not cache.addon_updated(self) and cache.get_addon_data(self).get("checked", False):
+            return True
+
         installed_libraries = libraries.get_installed_libraries()
 
-        for requirement in self.meta.get("requirements", []):
+        for requirement in self.meta.requirements:
             if requirement["name"].lower() not in installed_libraries:
                 if alert:
                     warnings.warn(
@@ -151,13 +152,16 @@ class Addon:
                     warnings.warn(
                         "addon [{}] requires library [{}] with version {}, "
                         "but current version of library is {}".format(
-                            self.meta["name"],
+                            self.meta.name,
                             requirement["name"],
                             requirement["version"],
                             installed_libraries[requirement["name"].lower()],
                         )
                     )
                 return False
+
+        cache.update_addon_state(self)
+        cache.update_addon_data(dict(checked=True), self)
 
         return True
 
@@ -168,6 +172,14 @@ class Addon:
         :return: list of installed libraries
         """
 
-        addon_requirements = self.meta.get("requirements", [])
+        addon_requirements = self.meta.requirements
 
-        return libraries.install_libraries(addon_requirements)
+        installed = libraries.install_libraries(addon_requirements)
+
+        libraries.get_installed_libraries(True)
+
+        cache = RelativeAddonsSystemCache.get_instance()
+        cache.update_addon_state(self)
+        cache.update_addon_data(dict(checked=True), self)
+
+        return installed

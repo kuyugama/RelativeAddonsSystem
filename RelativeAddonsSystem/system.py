@@ -4,15 +4,18 @@ import os
 import json
 import warnings
 
-from . import libraries
+from . import libraries, utils
 from .addon import Addon
 
 
 class RelativeAddonsSystem:
-
-    def __init__(self, addons_directory: str | Path, auto_install_requirements: bool = False):
+    def __init__(
+        self,
+        addons_directory: str | Path,
+        auto_install_requirements: bool = False,
+        cache_path: str | Path = Path(".ras-cache.json")
+    ):
         self.addon_with_requirements_problem = []
-        self.already_checked_addons = []
         self.pip_libraries = []
 
         if not isinstance(addons_directory, Path):
@@ -26,7 +29,11 @@ class RelativeAddonsSystem:
 
         self._directory = addons_directory
 
+        utils.RelativeAddonsSystemCache(cache_path)
+
         self.auto_install_requirements = auto_install_requirements
+
+        libraries.get_installed_libraries()
 
     @property
     def directory(self):
@@ -52,16 +59,18 @@ class RelativeAddonsSystem:
         addons_list = list(
             filter(
                 lambda filename: (self.directory / filename).is_dir(),
-                os.listdir(self.directory)
+                os.listdir(str(self.directory)),
             )
         )
 
         for addon_dir_name in addons_list:
-            addon_dir_name: str
             addon_path = self.directory / addon_dir_name
             addon_dir_list = os.listdir(addon_path)
 
-            if "__init__.py" not in addon_dir_list and "addon.json" not in addon_dir_list:
+            if (
+                "__init__.py" not in addon_dir_list
+                and "addon.json" not in addon_dir_list
+            ):
                 continue
 
             with open(addon_path / "addon.json", encoding="utf8") as f:
@@ -70,15 +79,11 @@ class RelativeAddonsSystem:
             if addon_info["name"] == name:
                 return Addon(path=addon_path, meta_path=addon_path / "addon.json")
 
-    def check_addon_requirements(
-            self,
-            name: str | Addon,
-            alert: bool = False
-    ) -> bool:
+    def check_addon_requirements(self, name: str | Addon, alert: bool = False) -> bool:
         """
         **Automatically checks the requirements of addon**
 
-        :param name: name of addon. You can pass here the addon name or its "object"(dictionary {path: ..., info: ...})
+        :param name: name of addon. You can pass here the addon name or RelativeAddonsSystem.Addon
         :param alert: bool. Alert if problem
         :return: bool. True if addon requirements is satisfied
         """
@@ -88,16 +93,15 @@ class RelativeAddonsSystem:
         if not addon:
             return False
 
-        if addon.meta["name"] in self.already_checked_addons:
-            return True
+        result = addon.check_requirements(alert=alert)
 
-        return addon.check_requirements(alert=alert)
+        return result
 
     def install_addon_requirements(self, name: str | Addon) -> list[str]:
         """
         **Automatic installation of addon requirements if required**
 
-        :param name: name of addon. You can pass here addon name or its "object"(dictionary {path: ..., info: ...})
+        :param name: name of addon. You can pass here addon name or RelativeAddonsSystem.Addon
         :return: list of installed libraries
         """
 
@@ -119,7 +123,7 @@ class RelativeAddonsSystem:
         addons_list = list(
             filter(
                 lambda filename: (self.directory / filename).is_dir(),
-                os.listdir(self.directory)
+                os.listdir(self.directory),
             )
         )
 
@@ -138,14 +142,15 @@ class RelativeAddonsSystem:
                 addon_meta = json.load(f)
 
             if (
-                    "name" not in addon_meta
-                    or "description" not in addon_meta
-                    or "version" not in addon_meta
-                    or "author" not in addon_meta
+                "name" not in addon_meta
+                or "description" not in addon_meta
+                or "version" not in addon_meta
+                or "author" not in addon_meta
             ):
                 warnings.warn(
                     "addon [{}] does not have required fields: name/description/version/author".format(
-                        addon_path.absolute())
+                        addon_path.absolute()
+                    )
                 )
                 continue
             addon = Addon(path=addon_path, meta_path=addon_path / "addon.json")
@@ -163,15 +168,11 @@ class RelativeAddonsSystem:
                 addon.meta.save()
 
             if self.auto_install_requirements and not self.check_addon_requirements(
-                    addon_meta["name"],
-                    alert=True
+                addon_meta["name"], alert=True
             ):
                 self.install_addon_requirements(addon)
 
             addons.append(addon)
-
-        if self.auto_install_requirements:
-            libraries.get_installed_libraries(force=True)
 
         return addons
 
@@ -188,7 +189,7 @@ class RelativeAddonsSystem:
         """
         **Get disabled addons**
 
-        :return: list of addons "objects"(dictionary {path: ..., info: ...})
+        :return: list of addons RelativeAddonsSystem.Addon
         """
 
         return self.get_all_addons(status="disabled")
@@ -197,7 +198,7 @@ class RelativeAddonsSystem:
         """
         **Get enabled addons as python modules**
 
-        :return: list of addons "objects"(dictionary {path: ..., info: ..., module: ...})
+        :return: list of addons RelativeAddonsSystem.Addon
         """
         enabled_addons = self.get_enabled_addons()
 
@@ -209,9 +210,7 @@ class RelativeAddonsSystem:
 
             addon.get_module()
 
-            addons.append(
-                addon
-            )
+            addons.append(addon)
 
         return addons
 
@@ -219,7 +218,7 @@ class RelativeAddonsSystem:
         """
         **Get disabled addons as python modules**
 
-        :return: list of addons objects
+        :return: list of addons with imported modules
         """
 
         enabled_addons = self.get_disabled_addons()
@@ -232,9 +231,7 @@ class RelativeAddonsSystem:
 
             addon.get_module()
 
-            addons.append(
-                addon
-            )
+            addons.append(addon)
 
         return addons
 
@@ -242,16 +239,19 @@ class RelativeAddonsSystem:
         """
         **Get addon as python module**
 
-        :param name: pass here the addon name or its object
-        :return: addon object
+        :param name: pass here the addon name or RelativeAddonsSystem.Addon
+        :return: RelativeAddonsSystem.Addon
         """
         addon = self.get_addon_by_name(name)
 
         if not addon:
             raise ValueError("Cannot find this addon")
 
-        if name not in self.already_checked_addons:
-            if name in self.addon_with_requirements_problem or not self.check_addon_requirements(name):
+        if self._cache.addon_updated(addon):
+            if (
+                name in self.addon_with_requirements_problem
+                or not self.check_addon_requirements(name)
+            ):
                 raise ValueError("Requirements of addon not satisfied")
 
         addon.get_module()
@@ -262,8 +262,8 @@ class RelativeAddonsSystem:
         """
         **Re-imports addon**
 
-        :param name: name of addon or its object
-        :return: addon object
+        :param name: name of addon or RelativeAddonsSystem.Addon
+        :return: RelativeAddonsSystem.Addon
         """
         addon = self.get_addon_as_python_module(name)
         addon.reload_module()
@@ -277,16 +277,18 @@ class RelativeAddonsSystem:
         """
         **enable addon**
 
-        :param name: name of addon. You can also pass here the object of addon
-        :return: same addon
+        :param name: name of addon. You can also pass here the RelativeAddonsSystem.Addon
+        :return: RelativeAddonsSystem.Addon
         """
         addon = self.get_addon_by_name(name)
 
         if not addon:
-            raise ValueError("Cannot find addon \"{name}\"".format(name=name))
+            raise ValueError('Cannot find addon "{name}"'.format(name=name))
 
         if not self.check_addon_requirements(addon):
-            raise ValueError("Requirements of {name} not satisfied!".format(name=addon.meta["name"]))
+            raise ValueError(
+                "Requirements of {name} not satisfied!".format(name=addon.meta["name"])
+            )
 
         addon.enable()
 
@@ -299,8 +301,8 @@ class RelativeAddonsSystem:
         """
         **disable addon**
 
-        :param name: name of addon. You can also pass here the object of addon
-        :return: same addon
+        :param name: name of addon. You can also pass here the RelativeAddonsSystem.Addon
+        :return: RelativeAddonsSystem.Addon
         """
         addon = self.get_addon_by_name(name)
 
@@ -318,7 +320,7 @@ class RelativeAddonsSystem:
         """
         **remove addon**
 
-        :param name: name of addon. You can also pass here the addon object
+        :param name: name of addon. You can also pass here the RelativeAddonsSystem.Addon
         :return: bool. True if successfully removed addon
         """
 
@@ -338,7 +340,7 @@ class RelativeAddonsSystem:
         """
         **Make tar-archive from addon(for sharing)**
 
-        :param name: the name of the addon. You can also pass here the addon object
+        :param name: the name of the addon. You can also pass here the RelativeAddonsSystem.Addon
         :return: Path to addon or if it is not found - None
         """
         addon = self.get_addon_by_name(name)
