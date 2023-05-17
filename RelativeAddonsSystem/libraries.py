@@ -24,8 +24,13 @@ def get_installed_libraries(force: bool = False) -> dict:
 
         libs = {}
 
-        for lib in pip_out.splitlines():
-            name, version = lib.lower().split("==")
+        for lib_line in pip_out.splitlines():
+            lib = lib_line.lower().split("==")
+
+            if len(lib) < 2:
+                continue
+
+            name, version = lib
             libs[name] = version
 
         installed_libraries.set(libs)
