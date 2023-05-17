@@ -5,4 +5,4 @@ from .libraries import install_libraries, get_installed_libraries
 
 __all__ = ["RelativeAddonsSystem", "Addon", "utils", "AddonMeta", "install_libraries", "get_installed_libraries"]
 
-__version__ = "2.5.1"
+__version__ = "2.5.2"

@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "relative-addons-system"
-version = "2.5.1"
+version = "2.5.2"
 description = "Easier way to manage your project addons"
-authors = [{ name = "kuyugama(youngtitanium)", email = "kuyugamas@gmail.com" }]
+authors = [{ name = "kuyugama(youngtitanium)", email = "mail.kuyugama@gmail.com" }]
 license = { file = "LICENSE" }
 classifiers = [
     "License :: OSI Approved :: MIT License",

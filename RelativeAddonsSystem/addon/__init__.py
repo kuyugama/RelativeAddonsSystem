@@ -32,7 +32,7 @@ class Addon:
         self._module = module
         self._storage = None
 
-        self._module_path = self.path.relative_to(Path())
+        self._module_path = self.path.relative_to(Path().absolute())
         self._config_path = self.path / (self.meta.name + "-storage.json")
 
     @property
