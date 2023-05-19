@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "relative-addons-system"
-version = "2.5.3"
+version = "2.5.4"
 description = "Easier way to manage your project addons"
 authors = [{ name = "kuyugama(youngtitanium)", email = "mail.kuyugama@gmail.com" }]
 license = { file = "LICENSE" }

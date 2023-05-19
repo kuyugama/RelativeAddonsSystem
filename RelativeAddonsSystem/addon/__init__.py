@@ -16,6 +16,12 @@ class MetadataError(BaseException):
 class Addon:
     def __init__(self, path: Path, meta_path: Path = None, module=None):
 
+        if isinstance(path, str):
+            path = Path(path)
+
+        elif not isinstance(path, Path):
+            raise ValueError("Unsupported type for addon path - {type}".format(type=type(path)))
+
         if meta_path is None:
             meta_path = path / "addon.json"
 
@@ -27,7 +33,7 @@ class Addon:
             )
 
         self._meta = AddonMeta(meta_path)
-        self.path = path
+        self.path = path.absolute()
         self._module = module
         self._storage = None
 
