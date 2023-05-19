@@ -1,5 +1,4 @@
 import importlib
-import json
 import shutil
 import warnings
 from pathlib import Path
@@ -45,8 +44,7 @@ class Addon:
                     )
                 )
 
-            with open(self.path / "addon.json") as info:
-                self._meta = AddonMeta(**json.load(info))
+            self._meta = AddonMeta(self.path / "addon.json")
 
         return self._meta
 
@@ -54,16 +52,12 @@ class Addon:
         return f"Addon(name={repr(self.meta.get('name', 'None'))}, path={repr(self.path.absolute())})"
 
     def enable(self):
-        self.meta["status"] = "enabled"
-
-        with open(self.path / "addon.json", "w", encoding="utf8") as f:
-            json.dump(self.meta, f, ensure_ascii=False, indent=4)
+        self.meta.status = "enabled"
+        self.meta.save()
 
     def disable(self):
-        self.meta["status"] = "disabled"
-
-        with open(self.path / "addon.json", "w", encoding="utf8") as f:
-            json.dump(self.meta, f, ensure_ascii=False, indent=4)
+        self.meta.status = "disabled"
+        self.meta.save()
 
     def remove(self):
         """
