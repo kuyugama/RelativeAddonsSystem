@@ -51,6 +51,12 @@ class Storage:
 
         self._map[name] = value
 
+    def remove(self, name: str):
+        if name not in self._map:
+            raise KeyError(name)
+
+        del self._map[name]
+
     def keys(self):
         return self._map.keys()
 
@@ -62,6 +68,9 @@ class Storage:
             raise KeyError(item)
 
         return self._map[item]
+
+    def __delitem__(self, item):
+        self.remove(item)
 
     def __contains__(self, item):
         return item in self._map

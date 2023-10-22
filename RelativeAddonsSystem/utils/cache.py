@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 from .storage import Storage
+from .. import Addon
 
 
 class RelativeAddonsSystemCache(Storage):
@@ -29,10 +30,10 @@ class RelativeAddonsSystemCache(Storage):
     def get_instance(cls) -> "RelativeAddonsSystemCache":
         return cls._instance
 
-    def get_addon_data(self, addon: "Addon"):
+    def get_addon_data(self, addon: Addon):
         return self.get(self.DATA_KEY, {}).get(addon.meta.name, {})
 
-    def update_addon_data(self, data: dict, addon: "Addon"):
+    def update_addon_data(self, data: dict, addon: Addon):
         if self.DATA_KEY not in self:
             self.set(self.DATA_KEY, {})
 
@@ -42,7 +43,7 @@ class RelativeAddonsSystemCache(Storage):
 
         self.save()
 
-    def addon_updated(self, addon: "Addon", update_state: bool = False):
+    def addon_updated(self, addon: Addon, update_state: bool = False):
         addons_states: dict[str, dict] = self.get(self.STATES_KEY, {})
 
         system_addon_modified_time = os.path.getmtime(addon.path)
@@ -56,7 +57,7 @@ class RelativeAddonsSystemCache(Storage):
 
         return saved_addon_modified_time != system_addon_modified_time
 
-    def update_addon_state(self, addon: "Addon"):
+    def update_addon_state(self, addon: Addon):
         addons_states: dict[str, dict] = self.get(self.STATES_KEY, {})
 
         system_addon_modified_time = os.path.getmtime(addon.path)
@@ -72,7 +73,7 @@ class RelativeAddonsSystemCache(Storage):
 
         self.save()
 
-    def remove_addons(self, *addons: "Addon"):
+    def remove_addons(self, *addons: Addon):
         cached_states = self.get(self.STATES_KEY, {})
         cached_data = self.get(self.DATA_KEY, {})
 

@@ -1,4 +1,3 @@
-import shutil
 from pathlib import Path
 import os
 import json
@@ -29,7 +28,7 @@ class RelativeAddonsSystem:
 
         self._directory = addons_directory
 
-        utils.RelativeAddonsSystemCache(cache_path)
+        self._cache = utils.RelativeAddonsSystemCache(cache_path)
 
         self.auto_install_requirements = auto_install_requirements
 
@@ -49,7 +48,7 @@ class RelativeAddonsSystem:
         **You can get addon by its name**
 
         :param name: name of addon. You can pass here the object of the addon and get the same object
-        :return: return addon object
+        :return: addon object
         """
         if isinstance(name, Addon):
             return name
@@ -128,6 +127,7 @@ class RelativeAddonsSystem:
         )
 
         addons = []
+        addons_by_name = {}
 
         for addon_name in addons_list:
             addon_name: str
@@ -172,6 +172,18 @@ class RelativeAddonsSystem:
             ):
                 self.install_addon_requirements(addon)
 
+            if addon.meta.name in addons_by_name:
+                warnings.warn(
+                    "Duplicate names of addon found: "
+                    "name {name} is occupied by {occupier}".format(
+                        name=addon.meta.name,
+                        occupier=addon.path.absolute()
+                    )
+                )
+                continue
+
+            addons_by_name[addon.meta.name] = addon
+
             addons.append(addon)
 
         return addons
@@ -194,47 +206,6 @@ class RelativeAddonsSystem:
 
         return self.get_all_addons(status="disabled")
 
-    def get_enabled_addons_as_python_modules(self) -> list[Addon]:
-        """
-        **Get enabled addons as python modules**
-
-        :return: list of addons RelativeAddonsSystem.Addon
-        """
-        enabled_addons = self.get_enabled_addons()
-
-        addons = []
-
-        for addon in enabled_addons:
-            if addon.meta["name"] in self.addon_with_requirements_problem:
-                continue
-
-            addon.get_module()
-
-            addons.append(addon)
-
-        return addons
-
-    def get_disabled_addons_as_python_modules(self) -> list[Addon]:
-        """
-        **Get disabled addons as python modules**
-
-        :return: list of addons with imported modules
-        """
-
-        enabled_addons = self.get_disabled_addons()
-
-        addons = []
-
-        for addon in enabled_addons:
-            if addon.meta["name"] in self.addon_with_requirements_problem:
-                continue
-
-            addon.get_module()
-
-            addons.append(addon)
-
-        return addons
-
     def get_addon_as_python_module(self, name: str | Addon) -> Addon:
         """
         **Get addon as python module**
@@ -254,22 +225,20 @@ class RelativeAddonsSystem:
             ):
                 raise ValueError("Requirements of addon not satisfied")
 
-        addon.get_module()
+        return addon.module
 
-        return addon
-
-    def reload_addon(self, name: str | dict) -> Addon:
+    def reload_addon(self, name: str | Addon) -> Addon:
         """
         **Re-imports addon**
 
         :param name: name of addon or RelativeAddonsSystem.Addon
         :return: RelativeAddonsSystem.Addon
         """
-        addon = self.get_addon_as_python_module(name)
+        addon = self.get_addon_by_name(name)
         addon.reload_module()
 
-        if addon.meta["name"] in self.already_checked_addons:
-            self.already_checked_addons.remove(addon.meta["name"])
+        if self._cache.get_addon_data(addon).get("checked"):
+            self._cache.update_addon_data(dict(checked=False), addon)
 
         return addon
 
@@ -292,8 +261,8 @@ class RelativeAddonsSystem:
 
         addon.enable()
 
-        if addon.meta["name"] in self.already_checked_addons:
-            self.already_checked_addons.remove(addon.meta["name"])
+        if not self._cache.get_addon_data(addon).get("checked"):
+            self._cache.update_addon_data(dict(checked=True), addon)
 
         return addon
 
@@ -311,9 +280,6 @@ class RelativeAddonsSystem:
 
         addon.disable()
 
-        if addon.meta["name"] in self.already_checked_addons:
-            self.already_checked_addons.remove(addon.meta["name"])
-
         return addon
 
     def remove_addon(self, name: str) -> bool:
@@ -329,10 +295,7 @@ class RelativeAddonsSystem:
         if not addon:
             raise ValueError("Cannot find this addon")
 
-        shutil.rmtree(addon.path, ignore_errors=True)
-
-        if addon.meta["name"] in self.already_checked_addons:
-            self.already_checked_addons.remove(addon.meta["name"])
+        addon.remove()
 
         return True
 
@@ -348,4 +311,4 @@ class RelativeAddonsSystem:
         if not addon:
             return
 
-        return shutil.make_archive(name, "tar", addon.path)
+        return addon.pack()

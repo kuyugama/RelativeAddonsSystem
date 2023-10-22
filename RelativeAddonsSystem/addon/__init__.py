@@ -26,16 +26,13 @@ class Addon:
             meta_path = path / "addon.json"
 
         if not isinstance(meta_path, Path):
-            raise MetadataError(
-                "Cannot recognize metadata of addon at {path}".format(
-                    path=path.absolute()
-                )
-            )
+            raise ValueError("Unsupported type for addon meta path - {type}".format(type=type(meta_path)))
 
-        self._meta = AddonMeta(meta_path)
+        self.meta_path = meta_path
         self.path = path.absolute()
         self._module = module
         self._storage = None
+        self._meta = None
 
         self._module_path = self.path.relative_to(Path().absolute())
         self._config_path = self.path / (self.meta.name + "-storage.json")
@@ -43,14 +40,14 @@ class Addon:
     @property
     def meta(self):
         if not self._meta:
-            if not self.path / "addon.json":
+            if not self.meta_path.exists():
                 raise MetadataError(
                     "Cannot find metadata file of addon at {path}".format(
                         path=self.path.absolute()
                     )
                 )
 
-            self._meta = AddonMeta(self.path / "addon.json")
+            self._meta = AddonMeta(self.meta_path)
 
         return self._meta
 
@@ -58,19 +55,26 @@ class Addon:
         return f"Addon(name={repr(self.meta.get('name', 'None'))}, path={repr(self.path.absolute())})"
 
     def enable(self):
-        self.meta.status = "enabled"
-        self.meta.save()
+        self.set_status("enabled")
 
     def disable(self):
-        self.meta.status = "disabled"
+        self.set_status("disabled")
+
+    def set_status(self, status: str):
+        if not isinstance(status, str):
+            raise ValueError("Addon status should be string not {type}".format(type=type(status)))
+
+        self.meta.status = status
         self.meta.save()
+
+    def get_status(self) -> str:
+        return self.meta.status
 
     def remove(self):
         """
         **Removes addon**
         """
         shutil.rmtree(self.path)
-        del self
 
     @property
     def module(self):

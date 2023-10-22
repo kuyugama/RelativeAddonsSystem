@@ -4,6 +4,21 @@ from typing import Any
 
 
 class AddonMeta:
+    """
+    AddonMeta File representation
+
+    Usage:
+
+    meta = AddonMeta("path/to/addon.json")
+
+    print(meta.version) # Print version from addon meta
+
+    meta.set("meta_option", "value") # Set "value" for meta_option in addon meta
+
+    meta.save() # Save addon meta
+
+    print(meta.meta_option) # Print meta_option from addon meta
+    """
     name: str
     version: str
     description: str
@@ -32,6 +47,13 @@ class AddonMeta:
 
         setattr(self, name, value)
 
+    def remove(self, name: str):
+        if name not in self:
+            raise KeyError(name)
+
+        delattr(self, name)
+        self._keys.remove(name)
+
     def __getitem__(self, item):
         if item not in self:
             raise KeyError(item)
@@ -39,10 +61,7 @@ class AddonMeta:
         return getattr(self, item, None)
 
     def __setitem__(self, key, value):
-        json.dumps(value)
-        if key not in self:
-            self._keys.append(key)
-        setattr(self, key, value)
+        self.set(key, value)
 
     def __contains__(self, item):
         return item in self._keys
